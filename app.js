@@ -46,7 +46,7 @@ app.get('/submit' ,(req,res)=>{
 })
 
 app.get('/logout' ,(req,res)=>{
-    res.render('logout')
+    res.render('login')
 })
 
 
@@ -67,40 +67,41 @@ app.post('/register' , (req,res)=>{
     
 })
 
-// app.post('/login' , (req,res)=>{
-//     const username = req.body.username
-//     const password =req.body.password
-
-//     users.findOne({email :username}).then((err,foundUser)=>{
-//         if(err){
-//             console.log(err);
-//         }else{
-//             if(foundUser){
-//                 if(foundUser.password === password){
-//                     // res.render("secrets")
-//                     console.log("logged in");
-//             }
-          
-//             }
-//         }
-//     })
-// })
 
 app.post('/login' , (req,res)=>{
 const username = req.body.username
 const password = req.body.password
 
- users.findOne({email : username}).then((found)=>{
-    if(found){
-        if(found.password === password){
-            res.render("secrets")
-        }
-    }
- }).catch((err)=>{
-    console.log(err);
- })
 
+    users.findOne({email : username}).then((found)=>{
+        if(found){
+            if(found.password === password){
+                res.render("secrets")
+            }
+        }else{
+            res.send("<h1 styles = text-align = 'centre'> Invalid crendentials</h1>")
+        }
+     }).catch((err)=>{
+       console.log(err);
+     })
+    })
+
+
+
+ app.post('/submit' , (req,res)=>{
+        const newSecret = new users({
+            secret : req.body.secret
         })
+        async function secret(){
+            try {
+                const result = await newSecret.save()
+                res.render("secrets")
+            } catch (error) {
+                console.log(error);
+            }
+        }
+        secret()
+    })
    
 
   
