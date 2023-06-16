@@ -1,6 +1,7 @@
 const express = require('express')
 const ejs = require('ejs')
 const mongoose = require('mongoose')
+const passport = require('passport')
 
 
 const app = express()
@@ -12,13 +13,21 @@ app.use(express.json())
 app.use(express.urlencoded({extended :true}))
 
 
-mongoose.connect('mongodb://127.0.0.1/test')
+mongoose.connect('mongodb://127.0.0.1/testdb')
 .then(()=>{
     console.log("connection is successful");
 })
 .catch((err)=>{
     console.log(err);
 })
+
+const userSchema = new mongoose.Schema({
+    email : String,
+    password : String,
+    secret : String
+})
+
+const users = new mongoose.model('users' , userSchema)
 
 app.get('/' ,(req,res)=>{
     res.render('home')
@@ -33,7 +42,7 @@ app.get('/login' ,(req,res)=>{
 })
 
 app.get('/submit' ,(req,res)=>{
-    res.render('sub,it')
+    res.render('submit')
 })
 
 app.get('/logout' ,(req,res)=>{
@@ -41,14 +50,63 @@ app.get('/logout' ,(req,res)=>{
 })
 
 
+app.post('/register' , (req,res)=>{
+    const newRegister = new users ({
+        email : req.body.username,
+        password : req.body.password
+    })
+    async function saveData(){
+        try {
+            const result = await newRegister.save()
+            res.render("secrets")
+        } catch (error) {
+            console.log(error);
+        }
+    }
+    saveData()
+    
+})
+
+// app.post('/login' , (req,res)=>{
+//     const username = req.body.username
+//     const password =req.body.password
+
+//     users.findOne({email :username}).then((err,foundUser)=>{
+//         if(err){
+//             console.log(err);
+//         }else{
+//             if(foundUser){
+//                 if(foundUser.password === password){
+//                     // res.render("secrets")
+//                     console.log("logged in");
+//             }
+          
+//             }
+//         }
+//     })
+// })
+
+app.post('/login' , (req,res)=>{
+const username = req.body.username
+const password = req.body.password
+
+ users.findOne({email : username}).then((found)=>{
+    if(found){
+        if(found.password === password){
+            res.render("secrets")
+        }
+    }
+ }).catch((err)=>{
+    console.log(err);
+ })
+
+        })
+   
+
+  
 
 
-
-
-
-
-
-app.listen(7070 , ()=>{
+app.listen(7080 , ()=>{
     console.log('server is running');
 })
 
