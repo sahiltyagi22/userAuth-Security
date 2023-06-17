@@ -151,7 +151,7 @@ if(req.isAuthenticated()){
 
 
 app.post('/register' , (req,res)=>{
-user.register({username : req.body.username} ,req.body.password , (err,user)=>{
+user.register({username : req.body.username} ,req.body.password,null , (err,user)=>{
     if(err){
         console.log(err);
         res.redirect('/register')

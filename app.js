@@ -4,7 +4,11 @@ const express = require('express')
 const ejs = require('ejs')
 const mongoose = require('mongoose')
 // const encrypt = require('mongoose-encryption')
-const hash = require('md5')
+// const hash = require('md5')
+
+const bcrypt = require('bcrypt')
+const saltRounds = 10;
+
 
 
 const app = express()
@@ -58,41 +62,43 @@ app.get('/logout' ,(req,res)=>{
 
 
 app.post('/register' , (req,res)=>{
-    const newRegister = new users ({
-        email : req.body.username,
-        password : hash(req.body.password)
+    bcrypt.hash(req.body.password , saltRounds ).then((hash)=>{
+        const newRegister = new users ({
+            email : req.body.username,
+            password : hash
+        })
+            async function saveData(){
+            try {
+           const result = await newRegister.save()
+               res.render("secrets")
+         } catch (error) {
+             console.log(error);
+          }
+         }
+         saveData()
     })
-    async function saveData(){
-        try {
-            const result = await newRegister.save()
-            res.render("secrets")
-        } catch (error) {
-            console.log(error);
-        }
-    }
-    saveData()
-    
-})
+  
+ })
 
 
 app.post('/login' , (req,res)=>{
 const username = req.body.username
-const password = hash(req.body.password)
+const password = req.body.password
 
 
     users.findOne({email : username}).then((found)=>{
         if(found){
-            if(found.password === password){
-                res.render("secrets")
-            }
-        }else{
-            res.send("<h1 styles = text-align = 'centre'> Invalid crendentials</h1>")
-        }
-     }).catch((err)=>{
-       console.log(err);
-     })
-    })
-
+            bcrypt.compare(password , found.password, (err , result)=>{
+                if(result === true){
+                    res.render("secrets")
+                }else{
+                    res.send("<h1 styles = text-align = 'centre'> Invalid crendentials</h1>")
+                }
+            })
+        
+}})
+        
+})
 
 
  app.post('/submit' , (req,res)=>{
@@ -120,3 +126,10 @@ app.listen(7080 , ()=>{
 
 
 
+
+
+
+
+// bcrypt.hash(req.body.password , saltRounds ,(err , hash)=>{
+//    
+// })
