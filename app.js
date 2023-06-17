@@ -3,7 +3,8 @@ require('dotenv').config()
 const express = require('express')
 const ejs = require('ejs')
 const mongoose = require('mongoose')
-const encrypt = require('mongoose-encryption')
+// const encrypt = require('mongoose-encryption')
+const hash = require('md5')
 
 
 const app = express()
@@ -30,7 +31,8 @@ const userSchema = new mongoose.Schema({
 })
 
 const secret = process.env.SECRET
-userSchema.plugin(encrypt ,{secret :secret , encryptedFields :["password"]})
+
+// userSchema.plugin(encrypt ,{secret :secret , encryptedFields :["password"]}) (FOR ENCRYPTING THE PASSWORD IN DATABSE)
 
 const users = new mongoose.model('users' , userSchema)
 
@@ -58,7 +60,7 @@ app.get('/logout' ,(req,res)=>{
 app.post('/register' , (req,res)=>{
     const newRegister = new users ({
         email : req.body.username,
-        password : req.body.password
+        password : hash(req.body.password)
     })
     async function saveData(){
         try {
@@ -75,7 +77,7 @@ app.post('/register' , (req,res)=>{
 
 app.post('/login' , (req,res)=>{
 const username = req.body.username
-const password = req.body.password
+const password = hash(req.body.password)
 
 
     users.findOne({email : username}).then((found)=>{
