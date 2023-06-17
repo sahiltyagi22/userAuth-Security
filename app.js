@@ -3,11 +3,17 @@ require('dotenv').config()
 const express = require('express')
 const ejs = require('ejs')
 const mongoose = require('mongoose')
+
 // const encrypt = require('mongoose-encryption')
 // const hash = require('md5')
 
-const bcrypt = require('bcrypt')
-const saltRounds = 10;
+// const bcrypt = require('bcrypt')
+// const saltRounds = 10;
+
+const session = require('express-session')
+const passport = require('passport')
+const mongooseSession = require('passport-local-mongoose')
+const { Strategy } = require('passport-local')
 
 
 
@@ -19,6 +25,14 @@ app.set('view engine' , 'ejs')
 app.use(express.json())
 app.use(express.urlencoded({extended :true}))
 
+app.use(session({
+    secret : process.env.SESSION_SECRET,
+    resave : true,
+    saveUninitialized : false
+}))
+
+app.use(passport.initialize())
+app.use(passport.session())
 
 mongoose.connect('mongodb://127.0.0.1/testdb')
 .then(()=>{
@@ -34,11 +48,16 @@ const userSchema = new mongoose.Schema({
     secret : String
 })
 
-const secret = process.env.SECRET
+userSchema.plugin(mongooseSession)
 
+// const secret = process.env.SECRET
 // userSchema.plugin(encrypt ,{secret :secret , encryptedFields :["password"]}) (FOR ENCRYPTING THE PASSWORD IN DATABSE)
 
 const users = new mongoose.model('users' , userSchema)
+
+passport.use(users.createStrategy())
+passport.serializeUser(users.serializeUser())
+passport.deserializeUser(users.deserializeUser())
 
 app.get('/' ,(req,res)=>{
     res.render('home')
@@ -56,47 +75,39 @@ app.get('/submit' ,(req,res)=>{
     res.render('submit')
 })
 
+app.get('/secrets' ,(req,res)=>{
+    if(req.isAuthenticated()){
+        res.render('secrets')
+    }else{
+        alert("Unauthenticated User , Please Login")
+        res.redirect('/login')
+
+    }
+})
+
 app.get('/logout' ,(req,res)=>{
     res.render('login')
 })
 
 
 app.post('/register' , (req,res)=>{
-    bcrypt.hash(req.body.password , saltRounds ).then((hash)=>{
-        const newRegister = new users ({
-            email : req.body.username,
-            password : hash
-        })
-            async function saveData(){
-            try {
-           const result = await newRegister.save()
-               res.render("secrets")
-         } catch (error) {
-             console.log(error);
-          }
-         }
-         saveData()
+    users.register({username : req.body.username} , req.body.password , (err , user)=>{
+        if(err){
+            console.log(err);
+            alert("There is some issue Please try again")
+            res.redirect('/register')
+        }else{
+            passport.authenticate('local')(req,res,()=>{
+                res.redirect('/secrets')
+            })
+        }
     })
   
  })
 
 
 app.post('/login' , (req,res)=>{
-const username = req.body.username
-const password = req.body.password
 
-
-    users.findOne({email : username}).then((found)=>{
-        if(found){
-            bcrypt.compare(password , found.password, (err , result)=>{
-                if(result === true){
-                    res.render("secrets")
-                }else{
-                    res.send("<h1 styles = text-align = 'centre'> Invalid crendentials</h1>")
-                }
-            })
-        
-}})
         
 })
 
