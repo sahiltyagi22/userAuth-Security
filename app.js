@@ -79,7 +79,6 @@ app.get('/secrets' ,(req,res)=>{
     if(req.isAuthenticated()){
         res.render('secrets')
     }else{
-        alert("Unauthenticated User , Please Login")
         res.redirect('/login')
 
     }
@@ -94,7 +93,6 @@ app.post('/register' , (req,res)=>{
     users.register({username : req.body.username} , req.body.password , (err , user)=>{
         if(err){
             console.log(err);
-            alert("There is some issue Please try again")
             res.redirect('/register')
         }else{
             passport.authenticate('local')(req,res,()=>{
@@ -108,7 +106,19 @@ app.post('/register' , (req,res)=>{
 
 app.post('/login' , (req,res)=>{
 
-        
+    const user = new users({
+        username : req.body.username,
+        password : req.body.password
+    })    
+    req.login(user , (err)=>{
+        if(err){
+            console.log(err);
+        }else{
+            passport.authenticate('local')(req,res , ()=>{
+                res.redirect('/secrets')
+            })
+        }
+    })
 })
 
 
